@@ -76,8 +76,12 @@ def saliency_sift_live_photo(img_paths, model='homography', avg='no', thres=155,
             M[0, 2] = dst_m[0] - src_m[0]
             M[1, 2] = dst_m[1] - src_m[1]
         elif model == 'affine':
-            M = cv2.estimateRigidTransform(src_pts, dst_pts, fullAffine=False)
-            M = np.array([M[0], M[1], [0, 0, 1]])
+            M, _ = cv2.estimateAffinePartial2D(src_pts, dst_pts)
+            if M is not None:
+                M = np.vstack([M, [0, 0, 1]])
+            else:
+                print("Failed to estimate affine transformation. Using identity matrix.")
+                M = np.eye(3)
         else:
             raise Exception()
 
