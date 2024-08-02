@@ -1,0 +1,1 @@
+ py saliency.py --pth  "C:/GitHub/PiCANet models/master/36epo_383000step.ckpt" --device cuda --imgs "C:/UnrealTD/OneDrive/Documents/RealityTo3D/00_INPUT/LiDAR_Cuisine/SaliencyTest/Sample/images/*.jpg"
