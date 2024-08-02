@@ -49,8 +49,12 @@ def saliency_sift_motion_parallex(img1_path, img2_path, model='homography', thre
         M[0, 2] = dst_m[0] - src_m[0]
         M[1, 2] = dst_m[1] - src_m[1]
     elif model == 'affine':
-        M = cv2.estimateRigidTransform(src_pts, dst_pts, fullAffine=False)
-        M = np.array([M[0], M[1], [0, 0, 1]])
+        M, _ = cv2.estimateAffinePartial2D(src_pts, dst_pts)
+        if M is not None:
+            M = np.vstack([M, [0, 0, 1]])
+        else:
+            print("Failed to estimate affine transformation. Using identity matrix.")
+            M = np.eye(3)
     else:
         raise Exception()
 
@@ -82,28 +86,68 @@ def saliency_sift_motion_parallex(img1_path, img2_path, model='homography', thre
 
 if __name__ == '__main__':
 
+    import tkinter as tk
+    from tkinter import filedialog, messagebox
+    import os
     import argparse
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--img1', required=True)
-    parser.add_argument('--img2', required=True)
-    parser.add_argument('--out', required=True)
-    parser.add_argument('--out_match')
     parser.add_argument('--fix_saliency_thres', default=256, type=float)
     parser.add_argument('--mode', choices=['raw', 'saliency_sift'], default='saliency_sift')
     parser.add_argument('--model', choices=['homography', 'translation', 'affine'], default='homography')
     args = parser.parse_args()
 
-    # Generate motion parallex
+    # Create a root window and hide it
+    root = tk.Tk()
+    root.withdraw()
+
+    # Select input images
+    while True:
+        image_paths = filedialog.askopenfilenames(
+            title="Select two images",
+            filetypes=[("Image files", "*.png;*.jpg;*.jpeg")],
+            multiple=True
+        )
+        
+        if len(image_paths) == 2:
+            break
+        else:
+            retry = messagebox.askretrycancel(
+                "Invalid Selection",
+                "Please select exactly two images.\nDo you want to try again?"
+            )
+            if not retry:
+                print("Selection cancelled. Exiting.")
+                exit()
+
+    img1_path, img2_path = image_paths
+
+    # Select output directory
+    out_dir = filedialog.askdirectory(title="Select output directory")
+    
+    if not out_dir:
+        print("Output directory must be selected. Exiting.")
+        exit()
+
+    # Generate motion parallax
     if args.mode == 'raw':
-        images = raw_motion_parallex(args.img1, args.img2)
+        images = raw_motion_parallex(img1_path, img2_path)
     elif args.mode == 'saliency_sift':
         images, match_img = saliency_sift_motion_parallex(
-            args.img1, args.img2, args.model, fix_saliency_thres=args.fix_saliency_thres)
+            img1_path, img2_path, args.model, fix_saliency_thres=args.fix_saliency_thres)
     else:
         raise NotImplementedError()
 
-    # Saved result as gif
-    imageio.mimsave(args.out, images, 'GIF')
-    if args.out_match:
-        imageio.imsave(args.out_match, match_img)
+    # Save result as gif
+    out_gif = os.path.join(out_dir, "motion_parallax.gif")
+    imageio.mimsave(out_gif, images, 'GIF')
+    print(f"Motion parallax GIF saved to: {out_gif}")
+
+    # Save match image if available
+    if 'match_img' in locals():
+        out_match = os.path.join(out_dir, "match_image.jpg")
+        imageio.imsave(out_match, match_img)
+        print(f"Match image saved to: {out_match}")
+
+    print("Processing complete.")
+    messagebox.showinfo("Processing Complete", "Motion parallax processing is complete.")
