@@ -41,9 +41,9 @@ class SaliencyModel():
 
 
 if __name__ == '__main__':
-
     import os
-    import glob
+    import tkinter as tk
+    from tkinter import filedialog
     import argparse
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -52,18 +52,31 @@ if __name__ == '__main__':
                              "https://drive.google.com/drive/folders/1s4M-_SnCPMj_2rsMkSy3pLnLQcgRakAe?usp=sharing")
     parser.add_argument('--device', default='cpu',
                         help="Device to run the model")
-    parser.add_argument('--imgs', required=True,
-                        help="Input image")
     args = parser.parse_args()
+
+    # Create a root window and hide it
+    root = tk.Tk()
+    root.withdraw()
+
+    # Open a directory selection dialog
+    img_dir = filedialog.askdirectory(title="Select folder containing images")
+
+    if not img_dir:
+        print("No folder selected. Exiting.")
+        exit()
 
     print('Preparing saliency model')
     model = SaliencyModel(args.pth, args.device)
 
-    for path in glob.glob(args.imgs):
-        print('Processing', path)
-        out_saliency = path[:-4] + '_saliency.png'
-        out_blend = path[:-4] + '_saliency.jpg'
-        img = Image.open(path).convert('RGB')
-        saliency, features = model.compute_saliency(img, ret_feature=True)
-        saliency.save(out_saliency)
-        Image.blend(img, saliency.convert('RGB'), alpha=0.8).save(out_blend)
+    for filename in os.listdir(img_dir):
+        if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif')):
+            path = os.path.join(img_dir, filename)
+            print('Processing', path)
+            out_saliency = os.path.join(img_dir, f"{os.path.splitext(filename)[0]}_saliency.png")
+            out_blend = os.path.join(img_dir, f"{os.path.splitext(filename)[0]}_saliency.jpg")
+            img = Image.open(path).convert('RGB')
+            saliency, features = model.compute_saliency(img, ret_feature=True)
+            saliency.save(out_saliency)
+            Image.blend(img, saliency.convert('RGB'), alpha=0.8).save(out_blend)
+
+    print("Processing complete.")
