@@ -11,7 +11,7 @@ from torchvision import transforms
 from saliency_network import Unet
 
 
-class SliencyModel():
+class SaliencyModel():
     def __init__(self, pth='saliency.pth', device='cpu'):
         self.device = torch.device(device)
         state_dict = torch.load(pth, map_location=self.device)
@@ -57,7 +57,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     print('Preparing saliency model')
-    model = SliencyModel(args.pth, args.device)
+    model = SaliencyModel(args.pth, args.device)
 
     for path in glob.glob(args.imgs):
         print('Processing', path)
