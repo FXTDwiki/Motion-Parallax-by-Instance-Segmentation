@@ -1,5 +1,5 @@
 import cv2
-import imageio
+import imageio.v2 as imageio
 import numpy as np
 from scipy.spatial.distance import cdist
 from PIL import Image
@@ -20,7 +20,7 @@ def saliency_sift_motion_parallex(img1_path, img2_path, model='homography', thre
     saliency2 = imageio.imread(img2_path[:-4] + '_saliency.png')
 
     # Detect features
-    method = feature_matcher.CreateMethod.surfext_bf_crosscheck()
+    method = feature_matcher.CreateMethod.sift_bf_crosscheck()
     kp1, des1, kp2, des2, matches = method(img1, img2)
 
     # Filter by saliency
@@ -104,6 +104,6 @@ if __name__ == '__main__':
         raise NotImplementedError()
 
     # Saved result as gif
-    imageio.mimsave(args.out, images, 'GIF-FI')
+    imageio.mimsave(args.out, images, 'GIF')
     if args.out_match:
         imageio.imsave(args.out_match, match_img)
