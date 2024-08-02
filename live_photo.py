@@ -1,12 +1,22 @@
 import cv2
-import imageio
+import imageio.v2 as imageio
 import numpy as np
 from PIL import Image
 import scipy.ndimage as ndimage
 
 import feature_matcher
-from saliency import SliencyModel
+from saliency import SaliencyModel
 
+# ----------------------------------------------------------------------------------
+#                     Note about the source dataset
+# ----------------------------------------------------------------------------------
+#
+# --img_format: is expecting a framerange starting at 0 with no gap in the sequence.
+#
+# ie. --img_format "C:\Source\image_%05d.jpg
+#     Where image_%05d.jpg is a sequence with the first frame named image_00000.jpg 
+#
+# ----------------------------------------------------------------------------------
 
 def raw_live_photo(img_paths):
     return [imageio.imread(path) for path in img_paths]
@@ -134,7 +144,7 @@ def saliency_sift_live_photo(img_paths, model='homography', avg='no', thres=155,
         
         imageio.imsave(args.out.replace('gif', 'png'), (255*bgmask).astype(np.uint8))  # visualize bg mask
         outdir = os.path.dirname(args.out)
-        imageio.mimsave(os.path.join(outdir, 'saliency.gif'), saliencies, 'GIF-FI', palettesize=256, fps=args.fps)
+        imageio.mimsave(os.path.join(outdir, 'saliency.gif'), saliencies, 'GIF', palettesize=256, fps=args.fps)
 
     return warp_imgs, match_imgs
 
@@ -178,7 +188,7 @@ if __name__ == '__main__':
         raise NotImplementedError()
 
     # Saved result as gif
-    imageio.mimsave(args.out, images, 'GIF-FI', palettesize=256, fps=args.fps)
+    imageio.mimsave(args.out, images, 'GIF', palettesize=256, fps=args.fps)
     if args.out_match_format:
         for i in range(len(match_imgs)):
             imageio.imsave(args.out_match_format % i, match_imgs[i])
