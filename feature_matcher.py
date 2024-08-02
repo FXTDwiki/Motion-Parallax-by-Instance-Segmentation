@@ -1,10 +1,23 @@
 import cv2
 import numpy as np
 
+#
+# Required arguments:
+
+# --path1: Path to the first input image
+# --path2: Path to the second input image
+# --patho: Path where the output image will be saved
+# --method: The feature matching method to use (one of the methods defined in the CreateMethod class)
+
+# Optional arguments include:
+
+# --homocheck: Flag to enable homography check
+# --top: Number of top matches to draw (default is 1000)
+# --oscale: Output scale factor (default is 1)
 
 class CreateMethod():
     def sift_bf_crosscheck(**kwargs):
-        detector = cv2.xfeatures2d.SIFT_create()
+        detector = cv2.SIFT_create()  # Updated line
         matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
 
         def run(img1, img2):
@@ -18,7 +31,7 @@ class CreateMethod():
 
     def sift_bf_ratiotest(**kwargs):
         kwargs['ratio'] = kwargs.get('ratio', 0.7)
-        detector = cv2.xfeatures2d.SIFT_create()
+        detector = cv2.SIFT_create()  # Updated line
         matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
 
         def run(img1, img2):
@@ -31,43 +44,43 @@ class CreateMethod():
 
         return run
 
-    def surf_bf_crosscheck(**kwargs):
-        kwargs['extended'] = kwargs.get('extended', False)
-        detector = cv2.xfeatures2d.SURF_create(extended=True)
-        matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
-
-        def run(img1, img2):
-            kp1, des1 = detector.detectAndCompute(img1, None)
-            kp2, des2 = detector.detectAndCompute(img2, None)
-            matches = matcher.match(des1, des2)
-            matches = sorted(matches, key=lambda x: x.distance)
-            return kp1, des1, kp2, des2, matches
-
-        return run
-
-    def surf_bf_ratiotest(**kwargs):
-        kwargs['extended'] = kwargs.get('extended', False)
-        kwargs['ratio'] = kwargs.get('ratio', 0.7)
-        detector = cv2.xfeatures2d.SURF_create(extended=True)
-        matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
-
-        def run(img1, img2):
-            kp1, des1 = detector.detectAndCompute(img1, None)
-            kp2, des2 = detector.detectAndCompute(img2, None)
-            matches = matcher.knnMatch(des1, des2, k=2)
-            matches = [m for m, n in matches if m.distance < kwargs['ratio'] * n.distance]
-            matches = sorted(matches, key=lambda x: x.distance)
-            return kp1, des1, kp2, des2, matches
-
-        return run
-
-    def surfext_bf_crosscheck(**kwargs):
-        kwargs['extended'] = True
-        return CreateMethod.surf_bf_crosscheck(**kwargs)
-
-    def surfext_bf_ratiotest(**kwargs):
-        kwargs['extended'] = True
-        return CreateMethod.surf_bf_ratiotest(**kwargs)
+#    def surf_bf_crosscheck(**kwargs):
+#        kwargs['extended'] = kwargs.get('extended', False)
+#        detector = cv2.xfeatures2d.SURF_create(extended=True)
+#        matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
+#
+#        def run(img1, img2):
+#            kp1, des1 = detector.detectAndCompute(img1, None)
+#            kp2, des2 = detector.detectAndCompute(img2, None)
+#            matches = matcher.match(des1, des2)
+#            matches = sorted(matches, key=lambda x: x.distance)
+#            return kp1, des1, kp2, des2, matches
+#
+#        return run
+#
+#    def surf_bf_ratiotest(**kwargs):
+#        kwargs['extended'] = kwargs.get('extended', False)
+#        kwargs['ratio'] = kwargs.get('ratio', 0.7)
+#        detector = cv2.xfeatures2d.SURF_create(extended=True)
+#        matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
+#
+#        def run(img1, img2):
+#            kp1, des1 = detector.detectAndCompute(img1, None)
+#            kp2, des2 = detector.detectAndCompute(img2, None)
+#            matches = matcher.knnMatch(des1, des2, k=2)
+#            matches = [m for m, n in matches if m.distance < kwargs['ratio'] * n.distance]
+#            matches = sorted(matches, key=lambda x: x.distance)
+#            return kp1, des1, kp2, des2, matches
+#
+#        return run
+#
+#    def surfext_bf_crosscheck(**kwargs):
+#        kwargs['extended'] = True
+#        return CreateMethod.surf_bf_crosscheck(**kwargs)
+#
+#    def surfext_bf_ratiotest(**kwargs):
+#        kwargs['extended'] = True
+#        return CreateMethod.surf_bf_ratiotest(**kwargs)
 
     def orb_bf_crosscheck(**kwargs):
         detector = cv2.ORB_create()
