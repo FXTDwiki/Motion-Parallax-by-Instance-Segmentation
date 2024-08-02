@@ -159,10 +159,14 @@ if __name__ == '__main__':
     import sys
     import glob
     import argparse
+    import tkinter as tk
+    from tkinter import filedialog
+
+    # Create the main window but hide it
+    root = tk.Tk()
+    root.withdraw()
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--img_format', required=True)
-    parser.add_argument('--out', required=True)
     parser.add_argument('--out_match_format')
     parser.add_argument('--mode', choices=['raw', 'saliency_sift'], default='saliency_sift')
     parser.add_argument('--model', choices=['homography', 'translation', 'affine'], default='homography')
@@ -170,29 +174,35 @@ if __name__ == '__main__':
     parser.add_argument('--fixbg', choices=['no', 'saliency', 'rgb_stddev', 'hsv_stddev'], default='no')
     args = parser.parse_args()
 
-    # Read all images
-    img_paths = []
-    for i in range(100000):
-        path = args.img_format % i
-        if os.path.isfile(path):
-            img_paths.append(path)
-        else:
-            break
-    if len(img_paths) <= 1:
-        print('No enough images found !?')
+    # Open a dialog to select the folder
+    folder_path = filedialog.askdirectory(title="Select the folder containing the images")
+    if not folder_path:
+        print("No folder selected. Exiting.")
         sys.exit()
 
-    # Generate motion parallex
+    # Set the output file path
+    args.out = os.path.join(folder_path, "00_output.gif")
+
+    # Read all images
+    all_files = sorted(glob.glob(os.path.join(folder_path, "*.jpg")))
+    img_paths = [f for f in all_files if not f.endswith('_saliency.jpg')]
+    if len(img_paths) <= 1:
+        print('Not enough images found!')
+        sys.exit()
+
+    # Generate motion parallax
     if args.mode == 'raw':
         images = raw_live_photo(img_paths)
     elif args.mode == 'saliency_sift':
-        img_paths = img_paths[:]
         images, match_imgs = saliency_sift_live_photo(img_paths, args.model, args.fixbg)
     else:
         raise NotImplementedError()
 
-    # Saved result as gif
+    # Save result as gif
     imageio.mimsave(args.out, images, 'GIF', palettesize=256, fps=args.fps)
+    print(f"Output saved as: {args.out}")
+
     if args.out_match_format:
         for i in range(len(match_imgs)):
-            imageio.imsave(args.out_match_format % i, match_imgs[i])
+            match_out = os.path.join(folder_path, args.out_match_format % i)
+            imageio.imsave(match_out, match_imgs[i])
